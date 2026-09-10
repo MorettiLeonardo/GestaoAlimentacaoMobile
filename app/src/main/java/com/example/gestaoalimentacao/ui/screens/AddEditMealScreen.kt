@@ -32,16 +32,17 @@ fun AddEditMealScreen(
         if (mealId != null) mealViewModel.getMealById(mealId) else null
     }
 
-    var title by remember { mutableStateOf(existingMeal?.title ?: "Frango Grelhado") }
-    var selectedCategory by remember { mutableStateOf(existingMeal?.category ?: "Proteina") }
-    var portionValueText by remember { mutableStateOf(existingMeal?.portionValue?.toInt()?.toString() ?: "150") }
-    var portionUnit by remember { mutableStateOf(existingMeal?.portionUnit ?: "g") }
-    var caloriesText by remember { mutableStateOf(existingMeal?.calories?.toString() ?: "240") }
-    var carbsText by remember { mutableStateOf(existingMeal?.carbs?.toString() ?: "0") }
-    var proteinText by remember { mutableStateOf(existingMeal?.protein?.toString() ?: "15") }
-    var fatText by remember { mutableStateOf(existingMeal?.fat?.toString() ?: "0.3") }
-    var notes by remember { mutableStateOf(existingMeal?.notes ?: "Sem óleo, bem temperado.") }
-    var reminderEnabled by remember { mutableStateOf(existingMeal?.reminderEnabled ?: true) }
+    var title = existingMeal?.title ?: ""
+    var selectedCategory = existingMeal?.category ?: ""
+    var portionValueText = existingMeal?.portionValue?.toInt()?.toString() ?: ""
+    var portionUnit = existingMeal?.portionUnit ?: ""
+    var caloriesText = existingMeal?.calories?.toString() ?: ""
+    var carbsText = existingMeal?.carbs?.toString() ?: ""
+    var proteinText = existingMeal?.protein?.toString() ?: ""
+    var fatText = existingMeal?.fat?.toString() ?: ""
+    var notes = existingMeal?.notes ?: ""
+    var reminderEnabled = existingMeal?.reminderEnabled ?: false
+
 
     var unitDropdownExpanded by remember { mutableStateOf(false) }
     val categories = listOf("Proteina", "Carboidrate", "Vegetal")

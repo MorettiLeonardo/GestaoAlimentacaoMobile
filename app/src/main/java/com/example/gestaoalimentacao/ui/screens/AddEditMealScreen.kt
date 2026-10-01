@@ -61,7 +61,6 @@ fun AddEditMealScreen(
                 .verticalScroll(scrollState)
                 .padding(bottom = 80.dp)
         ) {
-            // Drag handle top line
             Box(
                 modifier = Modifier
                     .width(40.dp)
@@ -72,7 +71,6 @@ fun AddEditMealScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Screen Title
             Text(
                 text = if (existingMeal == null) "Adicionar Alimento" else "Editar Alimento",
                 fontSize = 22.sp,
@@ -82,7 +80,6 @@ fun AddEditMealScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Nome de Alimento
             Text(
                 text = "Nome de Alimento",
                 fontSize = 14.sp,
@@ -100,7 +97,6 @@ fun AddEditMealScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Categoria Chips
             Text(
                 text = "Categoria",
                 fontSize = 14.sp,
@@ -136,7 +132,6 @@ fun AddEditMealScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Porção
             Text(
                 text = "Porção",
                 fontSize = 14.sp,
@@ -164,7 +159,6 @@ fun AddEditMealScreen(
                     modifier = Modifier.weight(1f)
                 )
 
-                // Unit Selector Dropdown
                 Box {
                     OutlinedCard(
                         onClick = { unitDropdownExpanded = true },
@@ -213,7 +207,6 @@ fun AddEditMealScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Calorias
             Text(
                 text = "Calorias",
                 fontSize = 14.sp,
@@ -237,7 +230,6 @@ fun AddEditMealScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Macros Header
             Text(
                 text = "Macros",
                 fontSize = 14.sp,
@@ -250,7 +242,6 @@ fun AddEditMealScreen(
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
                 modifier = Modifier.fillMaxWidth()
             ) {
-                // Carboidrato
                 Column(modifier = Modifier.weight(1f)) {
                     Text(text = "Carboidrato", fontSize = 12.sp, color = Color(0xFF64748B))
                     Spacer(modifier = Modifier.height(4.dp))
@@ -263,7 +254,6 @@ fun AddEditMealScreen(
                     )
                 }
 
-                // Proteina
                 Column(modifier = Modifier.weight(1f)) {
                     Text(text = "Proteina", fontSize = 12.sp, color = Color(0xFF64748B))
                     Spacer(modifier = Modifier.height(4.dp))
@@ -276,7 +266,6 @@ fun AddEditMealScreen(
                     )
                 }
 
-                // Gordura
                 Column(modifier = Modifier.weight(1f)) {
                     Text(text = "Gordura", fontSize = 12.sp, color = Color(0xFF64748B))
                     Spacer(modifier = Modifier.height(4.dp))
@@ -292,7 +281,6 @@ fun AddEditMealScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Reminder Switch
             Text(
                 text = "Reminder",
                 fontSize = 14.sp,
@@ -322,7 +310,6 @@ fun AddEditMealScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Action Buttons: Cancelar & Salvar
             Row(
                 horizontalArrangement = Arrangement.spacedBy(16.dp),
                 modifier = Modifier.fillMaxWidth()

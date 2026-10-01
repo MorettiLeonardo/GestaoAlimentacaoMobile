@@ -3,7 +3,6 @@ package com.example.gestaoalimentacao.ui.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.gestaoalimentacao.data.model.Meal
-import com.example.gestaoalimentacao.data.repository.MealRepository
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -17,7 +16,75 @@ class MealViewModel : ViewModel() {
 
     val targetCalories: Int = 2000
 
-    val meals: StateFlow<List<Meal>> = MealRepository.meals
+    private val initialMeals = listOf(
+        Meal(
+            id = "1",
+            title = "Café de manhã",
+            description = "Omelete, Pão integral, ☕, Café",
+            category = "Proteina",
+            portionValue = 200.0,
+            portionUnit = "g",
+            calories = 350,
+            carbs = 25.0,
+            protein = 18.0,
+            fat = 10.0,
+            dateText = "Oct 28, 8 AM",
+            isConsumed = true,
+            notes = "Sem açúcar no café.",
+            reminderEnabled = true
+        ),
+        Meal(
+            id = "2",
+            title = "Almoço",
+            description = "Arroz, feijão, frango grelhado, salada",
+            category = "Proteina",
+            portionValue = 400.0,
+            portionUnit = "g",
+            calories = 750,
+            carbs = 60.0,
+            protein = 45.0,
+            fat = 12.0,
+            dateText = "Oct 28, 7 PM",
+            isConsumed = true,
+            notes = "Frango bem temperado com ervas.",
+            reminderEnabled = true
+        ),
+        Meal(
+            id = "3",
+            title = "Jantar",
+            description = "Sopa de legumes",
+            category = "Vegetal",
+            portionValue = 300.0,
+            portionUnit = "g",
+            calories = 350,
+            carbs = 40.0,
+            protein = 10.0,
+            fat = 5.0,
+            dateText = "Oct 29, 7 PM",
+            isConsumed = false,
+            notes = "Leve antes de dormir.",
+            reminderEnabled = true
+        ),
+        Meal(
+            id = "4",
+            title = "Frango Grelhado",
+            description = "Peito de frango grelhado",
+            category = "Proteina",
+            portionValue = 150.0,
+            portionUnit = "g",
+            calories = 240,
+            carbs = 0.0,
+            protein = 15.0,
+            fat = 0.3,
+            dateText = "Oct 28, 12 PM",
+            isConsumed = true,
+            notes = "Sem óleo, bem temperado.",
+            reminderEnabled = true
+        )
+    )
+
+    private val _meals = MutableStateFlow(initialMeals)
+    val meals: StateFlow<List<Meal>> = _meals.asStateFlow()
 
     val filteredMeals: StateFlow<List<Meal>> = combine(meals, searchQuery) { mealList, query ->
         if (query.isBlank()) {
@@ -48,7 +115,7 @@ class MealViewModel : ViewModel() {
     }
 
     fun getMealById(id: String): Meal? {
-        return MealRepository.getMealById(id)
+        return _meals.value.find { it.id == id }
     }
 
     fun addMeal(
@@ -77,23 +144,22 @@ class MealViewModel : ViewModel() {
             isConsumed = false,
             dateText = "Hoje"
         )
-        MealRepository.addMeal(newMeal)
+        _meals.value = listOf(newMeal) + _meals.value
     }
 
     fun updateMeal(meal: Meal) {
-        MealRepository.updateMeal(meal)
+        _meals.value = _meals.value.map { if (it.id == meal.id) meal else it }
     }
 
     fun deleteMeal(id: String) {
-        MealRepository.deleteMeal(id)
+        _meals.value = _meals.value.filter { it.id != id }
     }
 
     fun toggleMealConsumed(id: String) {
-        MealRepository.toggleMealConsumed(id)
+        _meals.value = _meals.value.map { if (it.id == id) it.copy(isConsumed = !it.isConsumed) else it }
     }
 }
 
-// Extension to avoid compilation error with WhileSubsubscribed typo if any
 private fun SharingStarted.Companion.WhileSubsubscribed(stopTimeoutMillis: Long): SharingStarted {
     return SharingStarted.WhileSubscribed(stopTimeoutMillis)
 }

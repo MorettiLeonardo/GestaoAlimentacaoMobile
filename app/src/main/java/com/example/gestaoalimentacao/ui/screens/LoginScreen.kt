@@ -28,7 +28,7 @@ fun LoginScreen(
 ) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
-    val errorMessage by authViewModel.errorMessage.collectAsState()
+    var errorMessage by remember { mutableStateOf<String?>(null) }
 
     Box(
         modifier = Modifier
@@ -121,6 +121,8 @@ fun LoginScreen(
                     onClick = {
                         if (authViewModel.login(email, password)) {
                             onLoginSuccess()
+                        } else {
+                            errorMessage = "E-mail ou senha incorretos."
                         }
                     },
                     modifier = Modifier

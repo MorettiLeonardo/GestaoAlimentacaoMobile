@@ -10,8 +10,6 @@ import androidx.compose.material.icons.filled.ExitToApp
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -25,7 +23,7 @@ fun ProfileScreen(
     authViewModel: AuthViewModel,
     onLogout: () -> Unit
 ) {
-    val currentUser by authViewModel.currentUser.collectAsState()
+    val currentUser = authViewModel.currentUser
 
     Box(
         modifier = Modifier
@@ -49,7 +47,6 @@ fun ProfileScreen(
                     .padding(bottom = 24.dp)
             )
 
-            // Profile Avatar
             Surface(
                 modifier = Modifier.size(90.dp),
                 shape = CircleShape,
@@ -81,7 +78,6 @@ fun ProfileScreen(
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            // User Info Card
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(16.dp),
@@ -105,7 +101,6 @@ fun ProfileScreen(
 
             Spacer(modifier = Modifier.weight(1f))
 
-            // Logout Button
             OutlinedButton(
                 onClick = {
                     authViewModel.logout()

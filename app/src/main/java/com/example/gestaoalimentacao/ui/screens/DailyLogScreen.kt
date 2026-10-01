@@ -44,7 +44,6 @@ fun DailyLogScreen(
                 .fillMaxSize()
                 .padding(16.dp)
         ) {
-            // Header
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -60,7 +59,6 @@ fun DailyLogScreen(
                 )
             }
 
-            // Calorie summary
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -76,7 +74,6 @@ fun DailyLogScreen(
 
             Spacer(modifier = Modifier.height(6.dp))
 
-            // Progress bar
             val progress = (consumedCalories.toFloat() / targetCalories.toFloat()).coerceIn(0f, 1f)
             LinearProgressIndicator(
                 progress = { progress },
@@ -90,7 +87,6 @@ fun DailyLogScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Search bar
             OutlinedTextField(
                 value = searchQuery,
                 onValueChange = { mealViewModel.setSearchQuery(it) },
@@ -118,7 +114,6 @@ fun DailyLogScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Meal items list
             LazyColumn(
                 modifier = Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -134,7 +129,6 @@ fun DailyLogScreen(
             }
         }
 
-        // Floating Action Button - "Adicionar Alimento"
         ExtendedFloatingActionButton(
             onClick = onAddMealClick,
             modifier = Modifier
@@ -174,7 +168,6 @@ fun MealCardItem(
                 .fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Checkbox icon
             Box(
                 modifier = Modifier
                     .size(28.dp)

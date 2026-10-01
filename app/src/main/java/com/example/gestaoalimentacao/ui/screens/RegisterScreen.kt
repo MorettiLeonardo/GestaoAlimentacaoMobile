@@ -30,7 +30,7 @@ fun RegisterScreen(
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
-    val errorMessage by authViewModel.errorMessage.collectAsState()
+    var errorMessage by remember { mutableStateOf<String?>(null) }
 
     Box(
         modifier = Modifier
@@ -129,9 +129,13 @@ fun RegisterScreen(
 
                 Button(
                     onClick = {
-                        if (authViewModel.register(name, email, password, confirmPassword)) {
-                            onRegisterSuccess()
+                        errorMessage = when {
+                            name.isBlank() || email.isBlank() || password.isBlank() -> "Por favor, preencha todos os campos."
+                            password != confirmPassword -> "As senhas não coincidem."
+                            !authViewModel.register(name, email, password) -> "Este e-mail já está cadastrado."
+                            else -> null
                         }
+                        if (errorMessage == null) onRegisterSuccess()
                     },
                     modifier = Modifier
                         .fillMaxWidth()

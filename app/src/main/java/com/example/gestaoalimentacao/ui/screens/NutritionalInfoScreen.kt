@@ -77,7 +77,6 @@ fun NutritionalInfoScreen(
                 .padding(horizontal = 20.dp)
                 .verticalScroll(scrollState)
         ) {
-            // Main Header
             Text(
                 text = "Informação Nutricional",
                 fontSize = 24.sp,
@@ -92,7 +91,6 @@ fun NutritionalInfoScreen(
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            // Status Section
             Text(
                 text = "Status",
                 fontSize = 14.sp,
@@ -126,7 +124,6 @@ fun NutritionalInfoScreen(
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            // Detalhes da Porção
             Text(
                 text = "Detalhes da Porção",
                 fontSize = 14.sp,
@@ -151,7 +148,6 @@ fun NutritionalInfoScreen(
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            // Calorias
             Text(
                 text = "Calorias",
                 fontSize = 14.sp,
@@ -168,7 +164,6 @@ fun NutritionalInfoScreen(
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            // Tabela Nutricional
             Text(
                 text = "Tabela Nutricional",
                 fontSize = 14.sp,
@@ -183,7 +178,6 @@ fun NutritionalInfoScreen(
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            // Anotações
             Text(
                 text = "Anotações",
                 fontSize = 14.sp,
@@ -207,7 +201,6 @@ fun NutritionalInfoScreen(
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            // Button: Editar Registro
             Button(
                 onClick = { onEditClick(mealId) },
                 shape = RoundedCornerShape(12.dp),

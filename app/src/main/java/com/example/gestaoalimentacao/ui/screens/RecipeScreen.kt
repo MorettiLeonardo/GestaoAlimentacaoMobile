@@ -39,7 +39,6 @@ fun RecipeScreen(
             .padding(16.dp)
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
-            // Header
             Text(
                 text = "Receitas",
                 fontSize = 26.sp,
@@ -55,7 +54,6 @@ fun RecipeScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Search box
             OutlinedTextField(
                 value = searchQuery,
                 onValueChange = { recipeViewModel.setSearchQuery(it) },
@@ -83,7 +81,6 @@ fun RecipeScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Recipe items
             LazyColumn(
                 verticalArrangement = Arrangement.spacedBy(14.dp),
                 contentPadding = PaddingValues(bottom = 80.dp)
@@ -193,7 +190,6 @@ fun RecipeCardItem(recipe: Recipe) {
                 color = Color(0xFF64748B)
             )
 
-            // Expanded section for ingredients & instructions
             AnimatedVisibility(visible = expanded) {
                 Column(modifier = Modifier.padding(top = 16.dp)) {
                     HorizontalDivider(color = Color(0xFFF1F5F9))

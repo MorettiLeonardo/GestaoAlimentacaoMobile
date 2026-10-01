@@ -48,8 +48,7 @@ fun AppNavigation(
     mealViewModel: MealViewModel = viewModel(),
     recipeViewModel: RecipeViewModel = viewModel()
 ) {
-    val currentUser by authViewModel.currentUser.collectAsState()
-    val startDestination = if (currentUser != null) Screen.Main.route else Screen.Login.route
+    val startDestination = if (authViewModel.currentUser != null) Screen.Main.route else Screen.Login.route
 
     NavHost(
         navController = navController,
@@ -64,7 +63,6 @@ fun AppNavigation(
                     }
                 },
                 onNavigateToRegister = {
-                    authViewModel.clearError()
                     navController.navigate(Screen.Register.route)
                 }
             )
@@ -79,7 +77,6 @@ fun AppNavigation(
                     }
                 },
                 onNavigateToLogin = {
-                    authViewModel.clearError()
                     navController.popBackStack()
                 }
             )

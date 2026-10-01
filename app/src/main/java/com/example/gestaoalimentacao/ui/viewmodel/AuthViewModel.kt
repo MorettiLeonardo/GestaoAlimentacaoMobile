@@ -2,52 +2,30 @@ package com.example.gestaoalimentacao.ui.viewmodel
 
 import androidx.lifecycle.ViewModel
 import com.example.gestaoalimentacao.data.model.User
-import com.example.gestaoalimentacao.data.repository.AuthRepository
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 
 class AuthViewModel : ViewModel() {
-    val currentUser: StateFlow<User?> = AuthRepository.currentUser
+    private val users = mutableListOf(
+        User("1", "Usuário Exemplo", "usuario@email.com", "123456")
+    )
 
-    private val _errorMessage = MutableStateFlow<String?>(null)
-    val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()
+    var currentUser: User? = null
+        private set
 
-    fun login(email: String, pass: String): Boolean {
-        _errorMessage.value = null
-        val result = AuthRepository.login(email, pass)
-        return if (result.isSuccess) {
-            true
-        } else {
-            _errorMessage.value = result.exceptionOrNull()?.message ?: "Erro ao entrar."
-            false
-        }
+    fun login(email: String, senha: String): Boolean {
+        currentUser = users.find { it.email.equals(email, ignoreCase = true) && it.password == senha }
+        return currentUser != null
     }
 
-    fun register(name: String, email: String, pass: String, confirmPass: String): Boolean {
-        _errorMessage.value = null
-        if (name.isBlank() || email.isBlank() || pass.isBlank()) {
-            _errorMessage.value = "Por favor, preencha todos os campos."
-            return false
-        }
-        if (pass != confirmPass) {
-            _errorMessage.value = "As senhas não coincidem."
-            return false
-        }
-        val result = AuthRepository.register(name, email, pass)
-        return if (result.isSuccess) {
-            true
-        } else {
-            _errorMessage.value = result.exceptionOrNull()?.message ?: "Erro ao cadastrar."
-            false
-        }
+    fun register(nome: String, email: String, senha: String): Boolean {
+        if (users.any { it.email.equals(email, ignoreCase = true) }) return false
+
+        val user = User((users.size + 1).toString(), nome, email, senha)
+        users.add(user)
+        currentUser = user
+        return true
     }
 
     fun logout() {
-        AuthRepository.logout()
-    }
-
-    fun clearError() {
-        _errorMessage.value = null
+        currentUser = null
     }
 }

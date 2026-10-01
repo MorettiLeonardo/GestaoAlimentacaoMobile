@@ -129,7 +129,7 @@ fun RegisterScreen(
 
                 Button(
                     onClick = {
-                        errorMessage = when {
+                         errorMessage = when {
                             name.isBlank() || email.isBlank() || password.isBlank() -> "Por favor, preencha todos os campos."
                             password != confirmPassword -> "As senhas não coincidem."
                             !authViewModel.register(name, email, password) -> "Este e-mail já está cadastrado."

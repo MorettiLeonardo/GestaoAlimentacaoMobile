@@ -26,8 +26,8 @@ fun LoginScreen(
     onLoginSuccess: () -> Unit,
     onNavigateToRegister: () -> Unit
 ) {
-    var email by remember { mutableStateOf("usuario@email.com") }
-    var password by remember { mutableStateOf("123456") }
+    var email by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
     val errorMessage by authViewModel.errorMessage.collectAsState()
 
     Box(

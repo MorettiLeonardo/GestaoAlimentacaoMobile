@@ -144,7 +144,8 @@ fun MainContainerScreen(
     onNavigateToNutritionalInfo: (String) -> Unit,
     onLogout: () -> Unit
 ) {
-    var selectedTab by remember { mutableStateOf<BottomTab>(BottomTab.Inicio) }
+    val tabNavController = rememberNavController()
+    val currentRoute = tabNavController.currentBackStackEntryAsState().value?.destination?.route
 
     Scaffold(
         bottomBar = {
@@ -154,10 +155,16 @@ fun MainContainerScreen(
             ) {
                 val tabs = listOf(BottomTab.Inicio, BottomTab.Receitas, BottomTab.Perfil)
                 tabs.forEach { tab ->
-                    val isSelected = selectedTab == tab
+                    val isSelected = currentRoute == tab.route
                     NavigationBarItem(
                         selected = isSelected,
-                        onClick = { selectedTab = tab },
+                        onClick = {
+                            tabNavController.navigate(tab.route) {
+                                popUpTo(tabNavController.graph.startDestinationId) { saveState = true }
+                                launchSingleTop = true
+                                restoreState = true
+                            }
+                        },
                         icon = {
                             Icon(
                                 imageVector = tab.icon,
@@ -181,34 +188,34 @@ fun MainContainerScreen(
             }
         }
     ) { paddingValues ->
-        Box(
+        NavHost(
+            navController = tabNavController,
+            startDestination = BottomTab.Inicio.route,
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            when (selectedTab) {
-                BottomTab.Inicio -> {
-                    DailyLogScreen(
-                        mealViewModel = mealViewModel,
-                        onMealClick = { mealId ->
-                            onNavigateToNutritionalInfo(mealId)
-                        },
-                        onAddMealClick = {
-                            onNavigateToAddMeal(null)
-                        }
-                    )
-                }
-                BottomTab.Receitas -> {
-                    RecipeScreen(
-                        recipeViewModel = recipeViewModel
-                    )
-                }
-                BottomTab.Perfil -> {
-                    ProfileScreen(
-                        authViewModel = authViewModel,
-                        onLogout = onLogout
-                    )
-                }
+            composable(BottomTab.Inicio.route) {
+                DailyLogScreen(
+                    mealViewModel = mealViewModel,
+                    onMealClick = { mealId ->
+                        onNavigateToNutritionalInfo(mealId)
+                    },
+                    onAddMealClick = {
+                        onNavigateToAddMeal(null)
+                    }
+                )
+            }
+            composable(BottomTab.Receitas.route) {
+                RecipeScreen(
+                    recipeViewModel = recipeViewModel
+                )
+            }
+            composable(BottomTab.Perfil.route) {
+                ProfileScreen(
+                    authViewModel = authViewModel,
+                    onLogout = onLogout
+                )
             }
         }
     }

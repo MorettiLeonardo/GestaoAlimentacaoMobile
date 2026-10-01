@@ -64,6 +64,7 @@ fun AppNavigation(
                     }
                 },
                 onNavigateToRegister = {
+                    authViewModel.clearError()
                     navController.navigate(Screen.Register.route)
                 }
             )
@@ -74,10 +75,11 @@ fun AppNavigation(
                 authViewModel = authViewModel,
                 onRegisterSuccess = {
                     navController.navigate(Screen.Main.route) {
-                        popUpTo(Screen.Register.route) { inclusive = true }
+                        popUpTo(Screen.Login.route) { inclusive = true }
                     }
                 },
                 onNavigateToLogin = {
+                    authViewModel.clearError()
                     navController.popBackStack()
                 }
             )

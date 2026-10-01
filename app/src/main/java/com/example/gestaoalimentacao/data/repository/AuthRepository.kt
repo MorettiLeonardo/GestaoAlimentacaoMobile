@@ -10,7 +10,7 @@ object AuthRepository {
         User("1", "Usuário Exemplo", "usuario@email.com", "123456")
     )
 
-    private val _currentUser = MutableStateFlow<User?>(users.first())
+    private val _currentUser = MutableStateFlow<User?>(null)
     val currentUser: StateFlow<User?> = _currentUser.asStateFlow()
 
     fun login(email: String, password: String): Result<User> {

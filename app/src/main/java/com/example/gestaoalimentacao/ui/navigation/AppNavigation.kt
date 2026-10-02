@@ -32,13 +32,17 @@ fun AppNavigation(
                         popUpTo(Login) { inclusive = true }
                     }
                 },
-                onNavigateToRegister = { navController.navigate(Register) }
+                onNavigateToRegister = { email ->
+                    navController.navigate(Register(email)) { launchSingleTop = true }
+                }
             )
         }
 
-        composable<Register> {
+        composable<Register> { back ->
+            val rota = back.toRoute<Register>()
             RegisterScreen(
                 authViewModel = authViewModel,
+                initialEmail = rota.email,
                 onRegisterSuccess = {
                     navController.navigate(Inicio) {
                         popUpTo(Login) { inclusive = true }

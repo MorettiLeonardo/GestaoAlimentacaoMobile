@@ -10,12 +10,14 @@ import androidx.compose.material.icons.filled.ExitToApp
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.gestaoalimentacao.auth.SessaoUsuario
 import com.example.gestaoalimentacao.ui.viewmodel.AuthViewModel
 
 @Composable
@@ -23,7 +25,9 @@ fun ProfileScreen(
     authViewModel: AuthViewModel,
     onLogout: () -> Unit
 ) {
-    val currentUser = authViewModel.currentUser
+    LaunchedEffect(Unit) { authViewModel.carregarUsuario() }
+
+    val currentUser = authViewModel.usuario
 
     Box(
         modifier = Modifier
@@ -71,7 +75,7 @@ fun ProfileScreen(
                 color = Color(0xFF1E293B)
             )
             Text(
-                text = currentUser?.email ?: "usuario@email.com",
+                text = currentUser?.email ?: "",
                 fontSize = 14.sp,
                 color = Color(0xFF64748B)
             )
@@ -93,7 +97,7 @@ fun ProfileScreen(
                     )
                     Spacer(modifier = Modifier.height(12.dp))
 
-                    ProfileDetailRow(label = "Meta Calórica Diária", value = "2000 kcal")
+                    ProfileDetailRow(label = "Meta Calórica Diária", value = "${currentUser?.calorieGoal ?: 0} kcal")
                     ProfileDetailRow(label = "Plano Ativo", value = "Manutenção de Peso")
                     ProfileDetailRow(label = "Notificações de Lembrete", value = "Ativado")
                 }
@@ -103,7 +107,7 @@ fun ProfileScreen(
 
             OutlinedButton(
                 onClick = {
-                    authViewModel.logout()
+                    SessaoUsuario.encerrar()
                     onLogout()
                 },
                 modifier = Modifier

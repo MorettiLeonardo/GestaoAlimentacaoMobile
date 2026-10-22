@@ -1,136 +1,117 @@
 package com.example.gestaoalimentacao.ui.viewmodel
 
-import androidx.lifecycle.ViewModel
+import android.app.Application
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.gestaoalimentacao.auth.SessaoUsuario
+import com.example.gestaoalimentacao.data.dal.RecipeDao
 import com.example.gestaoalimentacao.data.model.Recipe
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.util.UUID
 
-class RecipeViewModel : ViewModel() {
-    private val _searchQuery = MutableStateFlow("")
-    val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
+class RecipeViewModel(application: Application) : AndroidViewModel(application) {
+    private val dao = RecipeDao(application)
+    var receitas by mutableStateOf<List<Recipe>>(emptyList())
+        private set
+    var receita by mutableStateOf<Recipe?>(null)
+        private set
+    var busca by mutableStateOf("")
+        private set
+    var carregando by mutableStateOf(false)
+        private set
+    var salvo by mutableStateOf(false)
+        private set
+    var mensagem by mutableStateOf<String?>(null)
+        private set
 
-    private val mockRecipes = listOf(
-        Recipe(
-            id = "1",
-            title = "Frango Grelhado com Salada Verde",
-            description = "Peito de frango temperado com ervas finas acompanhado de salada fresca.",
-            prepTime = "20 min",
-            calories = 320,
-            category = "Proteína",
-            ingredients = listOf(
-                "200g de peito de frango",
-                "1 xícara de alface e rúcula",
-                "1/2 tomate picado",
-                "1 colher de azeite de oliva",
-                "Sal e pimenta a gosto"
-            ),
-            instructions = listOf(
-                "Tempere o frango com sal, pimenta e ervas.",
-                "Grelhe em frigideira antiaderente até dourar.",
-                "Monte a salada e tempere com azeite e limão."
-            )
-        ),
-        Recipe(
-            id = "2",
-            title = "Omelete de Ervas e Queijo Branco",
-            description = "Omelete rápido, proteico e rico em nutrientes para um café reforçado.",
-            prepTime = "10 min",
-            calories = 250,
-            category = "Low Carb",
-            ingredients = listOf(
-                "3 ovos inteiros",
-                "30g de queijo minas frescal picado",
-                "Salsinha e cebolinha a gosto",
-                "1 pitada de sal"
-            ),
-            instructions = listOf(
-                "Bata os ovos em uma tigela com sal e ervas.",
-                "Despeje na frigideira aquecida e adicione o queijo.",
-                "Dobre ao meio e sirva em seguida."
-            )
-        ),
-        Recipe(
-            id = "3",
-            title = "Sopa Fit de Legumes com Frango",
-            description = "Sopa leve, reconfortante e ideal para o jantar.",
-            prepTime = "30 min",
-            calories = 210,
-            category = "Vegetal",
-            ingredients = listOf(
-                "150g de peito de frango desfiado",
-                "1 cenoura picada",
-                "1 chuchu e 1/2 abobrinha",
-                "1 litro de caldo vegetal caseiro"
-            ),
-            instructions = listOf(
-                "Cozinhe os legumes no caldo até ficarem macios.",
-                "Adicione o frango desfiado e acerte o tempero.",
-                "Deixe ferver por 5 minutos e sirva bem quente."
-            )
-        ),
-        Recipe(
-            id = "4",
-            title = "Panqueca de Aveia e Banana",
-            description = "Opção saudável para café da manhã ou lanche pré-treino.",
-            prepTime = "12 min",
-            calories = 280,
-            category = "Fitness",
-            ingredients = listOf(
-                "1 banana madura",
-                "2 colheres de sopa de aveia em flocos",
-                "1 ovo",
-                "Canela em pó a gosto"
-            ),
-            instructions = listOf(
-                "Amasse a banana e misture com o ovo e a aveia.",
-                "Despeje pequenas porções na frigideira untada.",
-                "Doure dos dois lados e polvilhe canela."
-            )
-        ),
-        Recipe(
-            id = "5",
-            title = "Suco Detox de Couve e Maçã",
-            description = "Bebida refrescante, antioxidante e rica em fibras.",
-            prepTime = "5 min",
-            calories = 110,
-            category = "Detox",
-            ingredients = listOf(
-                "1 folha de couve manteiga",
-                "1 maçã verde com casca",
-                "Suco de 1/2 limão",
-                "200ml de água de coco"
-            ),
-            instructions = listOf(
-                "Bata todos os ingredientes no liquidificador.",
-                "Sirva gelado sem coar para preservar as fibras."
-            )
-        )
-    )
-
-    val recipes: StateFlow<List<Recipe>> = MutableStateFlow(mockRecipes).asStateFlow()
-
-    val filteredRecipes: StateFlow<List<Recipe>> = combine(recipes, searchQuery) { recipeList, query ->
-        if (query.isBlank()) {
-            recipeList
-        } else {
-            recipeList.filter {
-                it.title.contains(query, ignoreCase = true) ||
-                        it.description.contains(query, ignoreCase = true) ||
-                        it.category.contains(query, ignoreCase = true)
+    private fun executar(op: suspend () -> Unit) {
+        if (carregando || salvo) return
+        carregando = true
+        mensagem = null
+        viewModelScope.launch {
+            try {
+                SessaoUsuario.exigirUsuario()
+                op()
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: IllegalArgumentException) {
+                mensagem = e.message
+            } catch (e: Exception) {
+                mensagem = "Um erro inesperado aconteceu."
+            } finally {
+                carregando = false
             }
         }
-    }.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5000),
-        initialValue = emptyList()
-    )
+    }
 
-    fun setSearchQuery(query: String) {
-        _searchQuery.value = query
+    fun listar() = executar {
+        receitas = withContext(Dispatchers.IO) { dao.listar(busca) }
+    }
+
+    fun mudarBusca(valor: String) {
+        if (valor.length <= 100) {
+            busca = valor
+            listar()
+        }
+    }
+
+    fun buscarPorId(id: String) = executar {
+        val encontrada = withContext(Dispatchers.IO) { dao.buscarPorId(id) }
+        receita = requireNotNull(encontrada) { "Receita não encontrada." }
+    }
+
+    fun salvar(
+        titulo: String,
+        descricao: String,
+        tempoPreparo: String,
+        caloriasTexto: String,
+        categoria: String,
+        ingredientesTexto: String,
+        modoPreparoTexto: String
+    ) = executar {
+        // Um item por linha, ignorando linhas vazias.
+        val ingredientes = ingredientesTexto.lines().filter { it.isNotBlank() }
+        val modoPreparo = modoPreparoTexto.lines().filter { it.isNotBlank() }
+
+        require(titulo.trim().length in 2..100) { "Informe um nome entre 2 e 100 caracteres." }
+        require(categoria.isNotBlank()) { "Informe a categoria." }
+        require(tempoPreparo.isNotBlank()) { "Informe o tempo de preparo." }
+        val calorias = requireNotNull(caloriasTexto.toIntOrNull()) { "Informe as calorias." }
+        require(ingredientes.isNotEmpty()) { "Informe ao menos um ingrediente." }
+        require(modoPreparo.isNotEmpty()) { "Informe ao menos um passo do modo de preparo." }
+
+        val dados = Recipe(
+            id = receita?.id ?: UUID.randomUUID().toString(),
+            title = titulo.trim(),
+            description = descricao.trim(),
+            prepTime = tempoPreparo.trim(),
+            calories = calorias,
+            category = categoria.trim(),
+            ingredients = ingredientes,
+            instructions = modoPreparo
+        )
+
+        withContext(Dispatchers.IO) {
+            if (receita == null) dao.cadastrar(dados) else dao.alterar(dados)
+        }
+        salvo = true
+    }
+
+    fun excluir(id: String) = executar {
+        receitas = withContext(Dispatchers.IO) {
+            dao.excluir(id)
+            dao.listar(busca)
+        }
+        mensagem = "Receita excluída."
+    }
+
+    fun consumirSalvo() {
+        salvo = false
     }
 }

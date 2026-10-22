@@ -16,6 +16,7 @@ import androidx.compose.material.icons.filled.LocalFireDepartment
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -27,10 +28,15 @@ import com.example.gestaoalimentacao.ui.viewmodel.RecipeViewModel
 
 @Composable
 fun RecipeScreen(
-    recipeViewModel: RecipeViewModel
+    recipeViewModel: RecipeViewModel,
+    onAddRecipeClick: () -> Unit,
+    onEditRecipeClick: (String) -> Unit
 ) {
-    val searchQuery by recipeViewModel.searchQuery.collectAsState()
-    val recipes by recipeViewModel.filteredRecipes.collectAsState()
+    LaunchedEffect(Unit) { recipeViewModel.listar() }
+
+    val searchQuery = recipeViewModel.busca
+    val recipes = recipeViewModel.receitas
+    var excluirId by rememberSaveable { mutableStateOf<String?>(null) }
 
     Box(
         modifier = Modifier
@@ -56,7 +62,7 @@ fun RecipeScreen(
 
             OutlinedTextField(
                 value = searchQuery,
-                onValueChange = { recipeViewModel.setSearchQuery(it) },
+                onValueChange = recipeViewModel::mudarBusca,
                 placeholder = { Text("Buscar receita...", color = Color(0xFF94A3B8)) },
                 leadingIcon = {
                     Icon(
@@ -85,16 +91,66 @@ fun RecipeScreen(
                 verticalArrangement = Arrangement.spacedBy(14.dp),
                 contentPadding = PaddingValues(bottom = 80.dp)
             ) {
+                item {
+                    recipeViewModel.mensagem?.let { Text(it, color = Color(0xFF64748B)) }
+                    if (recipes.isEmpty()) Text("Nenhuma receita encontrada", color = Color(0xFF64748B))
+                }
                 items(recipes, key = { it.id }) { recipe ->
-                    RecipeCardItem(recipe = recipe)
+                    RecipeCardItem(
+                        recipe = recipe,
+                        enabled = !recipeViewModel.carregando,
+                        onEditClick = { onEditRecipeClick(recipe.id) },
+                        onDeleteClick = { excluirId = recipe.id }
+                    )
                 }
             }
         }
+
+        ExtendedFloatingActionButton(
+            onClick = onAddRecipeClick,
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(bottom = 8.dp),
+            shape = RoundedCornerShape(24.dp),
+            containerColor = Color(0xFF0D52CE),
+            contentColor = Color.White
+        ) {
+            Text(
+                text = "Nova Receita",
+                fontWeight = FontWeight.SemiBold,
+                fontSize = 15.sp,
+                modifier = Modifier.padding(horizontal = 8.dp)
+            )
+        }
+    }
+
+    val selecionada = recipes.firstOrNull { it.id == excluirId }
+    if (selecionada != null) {
+        AlertDialog(
+            onDismissRequest = { excluirId = null },
+            title = { Text("Excluir receita?") },
+            text = { Text("Excluir \"${selecionada.title}\"? Esta ação não pode ser desfeita.") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        excluirId = null
+                        recipeViewModel.excluir(selecionada.id)
+                    },
+                    enabled = !recipeViewModel.carregando
+                ) { Text("Excluir") }
+            },
+            dismissButton = { TextButton(onClick = { excluirId = null }) { Text("Cancelar") } }
+        )
     }
 }
 
 @Composable
-fun RecipeCardItem(recipe: Recipe) {
+fun RecipeCardItem(
+    recipe: Recipe,
+    enabled: Boolean,
+    onEditClick: () -> Unit,
+    onDeleteClick: () -> Unit
+) {
     var expanded by remember { mutableStateOf(false) }
 
     Card(
@@ -189,6 +245,13 @@ fun RecipeCardItem(recipe: Recipe) {
                 fontSize = 13.sp,
                 color = Color(0xFF64748B)
             )
+
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                TextButton(onClick = onEditClick, enabled = enabled) { Text("Alterar") }
+                TextButton(onClick = onDeleteClick, enabled = enabled) {
+                    Text("Excluir", color = Color(0xFFEF4444))
+                }
+            }
 
             AnimatedVisibility(visible = expanded) {
                 Column(modifier = Modifier.padding(top = 16.dp)) {

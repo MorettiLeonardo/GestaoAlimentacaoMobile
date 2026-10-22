@@ -22,3 +22,6 @@ data class AddEditMeal(val mealId: String? = null)
 
 @Serializable
 data class NutritionalInfo(val mealId: String)
+
+@Serializable
+data class AddEditRecipe(val recipeId: String? = null)

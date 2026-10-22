@@ -29,11 +29,27 @@ fun NutritionalInfoScreen(
     onBackClick: () -> Unit,
     onEditClick: (String) -> Unit
 ) {
-    val meal = remember(mealId) { mealViewModel.getMealById(mealId) }
+    var confirmarExclusao by remember { mutableStateOf(false) }
+
+    LaunchedEffect(mealId) { mealViewModel.buscarPorId(mealId) }
+    LaunchedEffect(mealViewModel.salvo) {
+        if (mealViewModel.salvo) {
+            mealViewModel.consumirSalvo()
+            onBackClick()
+        }
+    }
+
+    val meal = mealViewModel.refeicao
 
     if (meal == null) {
-        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            Text("Refeição não encontrada.")
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            val mensagem = mealViewModel.mensagem
+            if (mensagem != null) Text(mensagem) else CircularProgressIndicator()
+            TextButton(onClick = onBackClick) { Text("Voltar") }
         }
         return
     }
@@ -54,10 +70,10 @@ fun NutritionalInfoScreen(
                     }
                 },
                 actions = {
-                    IconButton(onClick = {
-                        mealViewModel.deleteMeal(mealId)
-                        onBackClick()
-                    }) {
+                    IconButton(
+                        onClick = { confirmarExclusao = true },
+                        enabled = !mealViewModel.carregando
+                    ) {
                         Icon(
                             imageVector = Icons.Default.Delete,
                             contentDescription = "Excluir",
@@ -172,7 +188,7 @@ fun NutritionalInfoScreen(
             )
             Spacer(modifier = Modifier.height(8.dp))
 
-            NutritionalRow(label = "Carboidrato", value = "${meal.calories} kcal")
+            NutritionalRow(label = "Carboidrato", value = "${meal.carbs} g")
             NutritionalRow(label = "Proteína", value = "${meal.protein} g")
             NutritionalRow(label = "Gordura", value = "${meal.fat} g")
 
@@ -218,6 +234,24 @@ fun NutritionalInfoScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
         }
+    }
+
+    if (confirmarExclusao) {
+        AlertDialog(
+            onDismissRequest = { confirmarExclusao = false },
+            title = { Text("Excluir refeição?") },
+            text = { Text("Excluir \"${meal.title}\"? Esta ação não pode ser desfeita.") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        confirmarExclusao = false
+                        mealViewModel.excluir(meal.id)
+                    },
+                    enabled = !mealViewModel.carregando
+                ) { Text("Excluir") }
+            },
+            dismissButton = { TextButton(onClick = { confirmarExclusao = false }) { Text("Cancelar") } }
+        )
     }
 }
 

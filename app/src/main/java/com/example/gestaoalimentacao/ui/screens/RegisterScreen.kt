@@ -32,7 +32,15 @@ fun RegisterScreen(
     var email by remember { mutableStateOf(initialEmail) }
     var password by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
-    var errorMessage by remember { mutableStateOf<String?>(null) }
+    val errorMessage = authViewModel.mensagem
+
+    LaunchedEffect(Unit) { authViewModel.mensagem = null }
+    LaunchedEffect(authViewModel.concluido) {
+        if (authViewModel.concluido) {
+            authViewModel.consumirResultado()
+            onRegisterSuccess()
+        }
+    }
 
     Scaffold(
         containerColor = Color(0xFFF7F9FC),
@@ -135,7 +143,7 @@ fun RegisterScreen(
                     if (errorMessage != null) {
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            text = errorMessage!!,
+                            text = errorMessage,
                             color = MaterialTheme.colorScheme.error,
                             fontSize = 13.sp
                         )
@@ -145,21 +153,22 @@ fun RegisterScreen(
 
                     Button(
                         onClick = {
-                             errorMessage = when {
-                                name.isBlank() || email.isBlank() || password.isBlank() -> "Por favor, preencha todos os campos."
-                                password != confirmPassword -> "As senhas não coincidem."
-                                !authViewModel.register(name, email, password) -> "Este e-mail já está cadastrado."
-                                else -> null
+                            when {
+                                name.isBlank() || email.isBlank() || password.isBlank() ->
+                                    authViewModel.mensagem = "Por favor, preencha todos os campos."
+                                password != confirmPassword ->
+                                    authViewModel.mensagem = "As senhas não coincidem."
+                                else -> authViewModel.cadastrar(name, email, password)
                             }
-                            if (errorMessage == null) onRegisterSuccess()
                         },
+                        enabled = !authViewModel.carregando,
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(50.dp),
                         shape = RoundedCornerShape(12.dp),
                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0D52CE))
                     ) {
-                        Text(text = "Cadastrar", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+                        Text(text = if (authViewModel.carregando) "Aguarde..." else "Cadastrar", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
                     }
 
                     Spacer(modifier = Modifier.height(12.dp))

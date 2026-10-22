@@ -1,165 +1,130 @@
 package com.example.gestaoalimentacao.ui.viewmodel
 
-import androidx.lifecycle.ViewModel
+import android.app.Application
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.gestaoalimentacao.auth.SessaoUsuario
+import com.example.gestaoalimentacao.data.dal.MealDao
+import com.example.gestaoalimentacao.data.dal.UserDao
 import com.example.gestaoalimentacao.data.model.Meal
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
-class MealViewModel : ViewModel() {
-    private val _searchQuery = MutableStateFlow("")
-    val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
+class MealViewModel(application: Application) : AndroidViewModel(application) {
+    private val dao = MealDao(application)
+    private val usuarioDao = UserDao(application)
+    var refeicoes by mutableStateOf<List<Meal>>(emptyList())
+        private set
+    var refeicao by mutableStateOf<Meal?>(null)
+        private set
+    var busca by mutableStateOf("")
+        private set
+    var caloriasConsumidas by mutableStateOf(0)
+        private set
+    var metaCalorica by mutableStateOf(0)
+        private set
+    var carregando by mutableStateOf(false)
+        private set
+    var salvo by mutableStateOf(false)
+        private set
+    var mensagem by mutableStateOf<String?>(null)
+        private set
 
-    val targetCalories: Int = 2000
-
-    private val initialMeals = listOf(
-        Meal(
-            id = "1",
-            title = "Café de manhã",
-            description = "Omelete, Pão integral, ☕, Café",
-            category = "Proteina",
-            portionValue = 200.0,
-            portionUnit = "g",
-            calories = 350,
-            carbs = 25.0,
-            protein = 18.0,
-            fat = 10.0,
-            dateText = "Oct 28, 8 AM",
-            isConsumed = true,
-            notes = "Sem açúcar no café.",
-            reminderEnabled = true
-        ),
-        Meal(
-            id = "2",
-            title = "Almoço",
-            description = "Arroz, feijão, frango grelhado, salada",
-            category = "Proteina",
-            portionValue = 400.0,
-            portionUnit = "g",
-            calories = 750,
-            carbs = 60.0,
-            protein = 45.0,
-            fat = 12.0,
-            dateText = "Oct 28, 7 PM",
-            isConsumed = true,
-            notes = "Frango bem temperado com ervas.",
-            reminderEnabled = true
-        ),
-        Meal(
-            id = "3",
-            title = "Jantar",
-            description = "Sopa de legumes",
-            category = "Vegetal",
-            portionValue = 300.0,
-            portionUnit = "g",
-            calories = 350,
-            carbs = 40.0,
-            protein = 10.0,
-            fat = 5.0,
-            dateText = "Oct 29, 7 PM",
-            isConsumed = false,
-            notes = "Leve antes de dormir.",
-            reminderEnabled = true
-        ),
-        Meal(
-            id = "4",
-            title = "Frango Grelhado",
-            description = "Peito de frango grelhado",
-            category = "Proteina",
-            portionValue = 150.0,
-            portionUnit = "g",
-            calories = 240,
-            carbs = 0.0,
-            protein = 15.0,
-            fat = 0.3,
-            dateText = "Oct 28, 12 PM",
-            isConsumed = true,
-            notes = "Sem óleo, bem temperado.",
-            reminderEnabled = true
-        )
-    )
-
-    private val _meals = MutableStateFlow(initialMeals)
-    val meals: StateFlow<List<Meal>> = _meals.asStateFlow()
-
-    val filteredMeals: StateFlow<List<Meal>> = combine(meals, searchQuery) { mealList, query ->
-        if (query.isBlank()) {
-            mealList
-        } else {
-            mealList.filter {
-                it.title.contains(query, ignoreCase = true) ||
-                        it.description.contains(query, ignoreCase = true) ||
-                        it.category.contains(query, ignoreCase = true)
+    private fun executar(op: suspend (Long) -> Unit) {
+        if (carregando || salvo) return
+        carregando = true
+        mensagem = null
+        viewModelScope.launch {
+            try {
+                op(SessaoUsuario.exigirUsuario())
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: IllegalArgumentException) {
+                mensagem = e.message
+            } catch (e: Exception) {
+                mensagem = "Um erro inesperado aconteceu."
+            } finally {
+                carregando = false
             }
         }
-    }.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubsubscribed(5000),
-        initialValue = emptyList()
-    )
-
-    val consumedCalories: StateFlow<Int> = meals.combine(MutableStateFlow(Unit)) { mealList, _ ->
-        mealList.filter { it.isConsumed }.sumOf { it.calories }
-    }.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubsubscribed(5000),
-        initialValue = 0
-    )
-
-    fun setSearchQuery(query: String) {
-        _searchQuery.value = query
     }
 
-    fun getMealById(id: String): Meal? {
-        return _meals.value.find { it.id == id }
+    private suspend fun carregarLista(usuarioId: Long) {
+        refeicoes = withContext(Dispatchers.IO) { dao.listar(usuarioId, busca) }
+        caloriasConsumidas = withContext(Dispatchers.IO) { dao.somarCaloriasConsumidas(usuarioId) }
+        metaCalorica = withContext(Dispatchers.IO) { usuarioDao.buscarPorId(usuarioId)?.calorieGoal ?: 0 }
     }
 
-    fun addMeal(
-        title: String,
-        category: String,
-        portionValue: Double,
-        portionUnit: String,
-        calories: Int,
-        carbs: Double,
-        protein: Double,
-        fat: Double,
-        reminderEnabled: Boolean,
-        notes: String = ""
-    ) {
-        val newMeal = Meal(
-            title = title.ifBlank { "Nova Refeição" },
-            category = category,
-            portionValue = portionValue,
-            portionUnit = portionUnit,
-            calories = calories,
-            carbs = carbs,
-            protein = protein,
-            fat = fat,
-            notes = notes,
-            reminderEnabled = reminderEnabled,
-            isConsumed = false,
-            dateText = "Hoje"
+    fun listar() = executar { usuarioId -> carregarLista(usuarioId) }
+
+    fun mudarBusca(valor: String) {
+        if (valor.length <= 100) {
+            busca = valor
+            listar()
+        }
+    }
+
+    fun buscarPorId(id: String) = executar { usuarioId ->
+        val encontrada = withContext(Dispatchers.IO) { dao.buscarPorId(usuarioId, id) }
+        refeicao = requireNotNull(encontrada) { "Refeição não encontrada." }
+    }
+
+    fun salvar(
+        titulo: String,
+        categoria: String,
+        porcaoTexto: String,
+        unidade: String,
+        caloriasTexto: String,
+        carboidratosTexto: String,
+        proteinasTexto: String,
+        gordurasTexto: String,
+        lembrete: Boolean,
+        observacoes: String
+    ) = executar { usuarioId ->
+        require(titulo.trim().length in 2..100) { "Informe um nome entre 2 e 100 caracteres." }
+        require(categoria.isNotBlank()) { "Selecione uma categoria." }
+        require(unidade.isNotBlank()) { "Selecione a unidade da porção." }
+        val porcao = requireNotNull(porcaoTexto.toDoubleOrNull()) { "Informe uma porção válida." }
+        val calorias = requireNotNull(caloriasTexto.toIntOrNull()) { "Informe as calorias." }
+
+        val dados = (refeicao ?: Meal(title = titulo.trim())).copy(
+            title = titulo.trim(),
+            category = categoria,
+            portionValue = porcao,
+            portionUnit = unidade,
+            calories = calorias,
+            carbs = carboidratosTexto.toDoubleOrNull() ?: 0.0,
+            protein = proteinasTexto.toDoubleOrNull() ?: 0.0,
+            fat = gordurasTexto.toDoubleOrNull() ?: 0.0,
+            notes = observacoes.trim(),
+            reminderEnabled = lembrete
         )
-        _meals.value = listOf(newMeal) + _meals.value
+
+        withContext(Dispatchers.IO) {
+            if (refeicao == null) dao.cadastrar(usuarioId, dados)
+            else dao.alterar(usuarioId, dados)
+        }
+        salvo = true
     }
 
-    fun updateMeal(meal: Meal) {
-        _meals.value = _meals.value.map { if (it.id == meal.id) meal else it }
+    fun alternarConsumida(selecionada: Meal) = executar { usuarioId ->
+        withContext(Dispatchers.IO) {
+            dao.alterar(usuarioId, selecionada.copy(isConsumed = !selecionada.isConsumed))
+        }
+        carregarLista(usuarioId)
     }
 
-    fun deleteMeal(id: String) {
-        _meals.value = _meals.value.filter { it.id != id }
+    fun excluir(id: String) = executar { usuarioId ->
+        withContext(Dispatchers.IO) { dao.excluir(usuarioId, id) }
+        salvo = true
     }
 
-    fun toggleMealConsumed(id: String) {
-        _meals.value = _meals.value.map { if (it.id == id) it.copy(isConsumed = !it.isConsumed) else it }
+    fun consumirSalvo() {
+        salvo = false
     }
-}
-
-private fun SharingStarted.Companion.WhileSubsubscribed(stopTimeoutMillis: Long): SharingStarted {
-    return SharingStarted.WhileSubscribed(stopTimeoutMillis)
 }

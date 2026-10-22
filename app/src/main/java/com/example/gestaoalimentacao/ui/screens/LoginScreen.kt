@@ -27,7 +27,15 @@ fun LoginScreen(
 ) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
-    var errorMessage by remember { mutableStateOf<String?>(null) }
+    val errorMessage = authViewModel.mensagem
+
+    LaunchedEffect(Unit) { authViewModel.mensagem = null }
+    LaunchedEffect(authViewModel.concluido) {
+        if (authViewModel.concluido) {
+            authViewModel.consumirResultado()
+            onLoginSuccess()
+        }
+    }
 
     Scaffold(containerColor = Color(0xFFF7F9FC)) { innerPadding ->
         Box(
@@ -109,7 +117,7 @@ fun LoginScreen(
                     if (errorMessage != null) {
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            text = errorMessage!!,
+                            text = errorMessage,
                             color = MaterialTheme.colorScheme.error,
                             fontSize = 13.sp
                         )
@@ -119,19 +127,17 @@ fun LoginScreen(
 
                     Button(
                         onClick = {
-                            if (authViewModel.login(email, password)) {
-                                onLoginSuccess()
-                            } else {
-                                errorMessage = "E-mail ou senha incorretos."
-                            }
+                            authViewModel.login(email, password)
+                            password = ""
                         },
+                        enabled = !authViewModel.carregando,
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(50.dp),
                         shape = RoundedCornerShape(12.dp),
                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0D52CE))
                     ) {
-                        Text(text = "Entrar", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+                        Text(text = if (authViewModel.carregando) "Aguarde..." else "Entrar", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
                     }
 
                     Spacer(modifier = Modifier.height(16.dp))

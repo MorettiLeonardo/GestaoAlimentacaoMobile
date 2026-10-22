@@ -28,20 +28,29 @@ fun AddEditMealScreen(
     onSaveSuccess: () -> Unit,
     onCancel: () -> Unit
 ) {
-    val existingMeal = remember(mealId) {
-        if (mealId != null) mealViewModel.getMealById(mealId) else null
+    LaunchedEffect(mealId) {
+        if (mealId != null) mealViewModel.buscarPorId(mealId)
+    }
+    LaunchedEffect(mealViewModel.salvo) {
+        if (mealViewModel.salvo) {
+            mealViewModel.consumirSalvo()
+            onSaveSuccess()
+        }
     }
 
-    var title = existingMeal?.title ?: ""
-    var selectedCategory = existingMeal?.category ?: ""
-    var portionValueText = existingMeal?.portionValue?.toInt()?.toString() ?: ""
-    var portionUnit = existingMeal?.portionUnit ?: ""
-    var caloriesText = existingMeal?.calories?.toString() ?: ""
-    var carbsText = existingMeal?.carbs?.toString() ?: ""
-    var proteinText = existingMeal?.protein?.toString() ?: ""
-    var fatText = existingMeal?.fat?.toString() ?: ""
-    var notes = existingMeal?.notes ?: ""
-    var reminderEnabled = existingMeal?.reminderEnabled ?: false
+    val existingMeal = mealViewModel.refeicao
+
+    // Os campos são preenchidos de novo quando a refeição chega do banco.
+    var title by remember(existingMeal) { mutableStateOf(existingMeal?.title ?: "") }
+    var selectedCategory by remember(existingMeal) { mutableStateOf(existingMeal?.category ?: "") }
+    var portionValueText by remember(existingMeal) { mutableStateOf(existingMeal?.portionValue?.toInt()?.toString() ?: "") }
+    var portionUnit by remember(existingMeal) { mutableStateOf(existingMeal?.portionUnit ?: "") }
+    var caloriesText by remember(existingMeal) { mutableStateOf(existingMeal?.calories?.toString() ?: "") }
+    var carbsText by remember(existingMeal) { mutableStateOf(existingMeal?.carbs?.toString() ?: "") }
+    var proteinText by remember(existingMeal) { mutableStateOf(existingMeal?.protein?.toString() ?: "") }
+    var fatText by remember(existingMeal) { mutableStateOf(existingMeal?.fat?.toString() ?: "") }
+    var notes by remember(existingMeal) { mutableStateOf(existingMeal?.notes ?: "") }
+    var reminderEnabled by remember(existingMeal) { mutableStateOf(existingMeal?.reminderEnabled ?: false) }
 
 
     var unitDropdownExpanded by remember { mutableStateOf(false) }
@@ -308,6 +317,12 @@ fun AddEditMealScreen(
                 )
             }
 
+            mealViewModel.mensagem?.let {
+                Spacer(modifier = Modifier.height(12.dp))
+                Text(text = it, color = MaterialTheme.colorScheme.error, fontSize = 13.sp)
+            }
+            if (mealViewModel.carregando) Text("Aguarde...")
+
             Spacer(modifier = Modifier.height(24.dp))
 
             Row(
@@ -330,42 +345,20 @@ fun AddEditMealScreen(
 
                 Button(
                     onClick = {
-                        val portionVal = portionValueText.toDoubleOrNull() ?: 150.0
-                        val calVal = caloriesText.toIntOrNull() ?: 240
-                        val carbVal = carbsText.toDoubleOrNull() ?: 0.0
-                        val protVal = proteinText.toDoubleOrNull() ?: 0.0
-                        val fatVal = fatText.toDoubleOrNull() ?: 0.0
-
-                        if (existingMeal != null) {
-                            val updated = existingMeal.copy(
-                                title = title.ifBlank { existingMeal.title },
-                                category = selectedCategory,
-                                portionValue = portionVal,
-                                portionUnit = portionUnit,
-                                calories = calVal,
-                                carbs = carbVal,
-                                protein = protVal,
-                                fat = fatVal,
-                                notes = notes,
-                                reminderEnabled = reminderEnabled
-                            )
-                            mealViewModel.updateMeal(updated)
-                        } else {
-                            mealViewModel.addMeal(
-                                title = title,
-                                category = selectedCategory,
-                                portionValue = portionVal,
-                                portionUnit = portionUnit,
-                                calories = calVal,
-                                carbs = carbVal,
-                                protein = protVal,
-                                fat = fatVal,
-                                reminderEnabled = reminderEnabled,
-                                notes = notes
-                            )
-                        }
-                        onSaveSuccess()
+                        mealViewModel.salvar(
+                            titulo = title,
+                            categoria = selectedCategory,
+                            porcaoTexto = portionValueText,
+                            unidade = portionUnit,
+                            caloriasTexto = caloriesText,
+                            carboidratosTexto = carbsText,
+                            proteinasTexto = proteinText,
+                            gordurasTexto = fatText,
+                            lembrete = reminderEnabled,
+                            observacoes = notes
+                        )
                     },
+                    enabled = !mealViewModel.carregando,
                     shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0D52CE)),
                     modifier = Modifier

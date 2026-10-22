@@ -29,10 +29,12 @@ fun DailyLogScreen(
     onMealClick: (String) -> Unit,
     onAddMealClick: () -> Unit
 ) {
-    val searchQuery by mealViewModel.searchQuery.collectAsState()
-    val meals by mealViewModel.filteredMeals.collectAsState()
-    val consumedCalories by mealViewModel.consumedCalories.collectAsState()
-    val targetCalories = mealViewModel.targetCalories
+    LaunchedEffect(Unit) { mealViewModel.listar() }
+
+    val searchQuery = mealViewModel.busca
+    val meals = mealViewModel.refeicoes
+    val consumedCalories = mealViewModel.caloriasConsumidas
+    val targetCalories = mealViewModel.metaCalorica
 
     Box(
         modifier = Modifier
@@ -74,7 +76,7 @@ fun DailyLogScreen(
 
             Spacer(modifier = Modifier.height(6.dp))
 
-            val progress = (consumedCalories.toFloat() / targetCalories.toFloat()).coerceIn(0f, 1f)
+            val progress = if (targetCalories > 0) (consumedCalories.toFloat() / targetCalories).coerceIn(0f, 1f) else 0f
             LinearProgressIndicator(
                 progress = { progress },
                 modifier = Modifier
@@ -89,7 +91,7 @@ fun DailyLogScreen(
 
             OutlinedTextField(
                 value = searchQuery,
-                onValueChange = { mealViewModel.setSearchQuery(it) },
+                onValueChange = mealViewModel::mudarBusca,
                 placeholder = { Text("Buscar alimento...", color = Color(0xFF94A3B8)) },
                 leadingIcon = {
                     Icon(
@@ -119,10 +121,14 @@ fun DailyLogScreen(
                 verticalArrangement = Arrangement.spacedBy(12.dp),
                 contentPadding = PaddingValues(bottom = 80.dp)
             ) {
+                item {
+                    mealViewModel.mensagem?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+                    if (meals.isEmpty()) Text("Nenhuma refeição encontrada", color = Color(0xFF64748B))
+                }
                 items(meals, key = { it.id }) { meal ->
                     MealCardItem(
                         meal = meal,
-                        onToggleConsumed = { mealViewModel.toggleMealConsumed(meal.id) },
+                        onToggleConsumed = { mealViewModel.alternarConsumida(meal) },
                         onMealClick = { onMealClick(meal.id) }
                     )
                 }

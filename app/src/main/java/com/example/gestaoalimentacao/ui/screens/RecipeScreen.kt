@@ -30,7 +30,8 @@ import com.example.gestaoalimentacao.ui.viewmodel.RecipeViewModel
 fun RecipeScreen(
     recipeViewModel: RecipeViewModel,
     onAddRecipeClick: () -> Unit,
-    onEditRecipeClick: (String) -> Unit
+    onEditRecipeClick: (String) -> Unit,
+    onSugestoesClick: () -> Unit = {}
 ) {
     LaunchedEffect(Unit) { recipeViewModel.listar() }
 
@@ -57,6 +58,7 @@ fun RecipeScreen(
                 fontSize = 13.sp,
                 color = Color(0xFF64748B)
             )
+            TextButton(onClick = onSugestoesClick) { Text("Buscar sugestões na internet") }
 
             Spacer(modifier = Modifier.height(16.dp))
 

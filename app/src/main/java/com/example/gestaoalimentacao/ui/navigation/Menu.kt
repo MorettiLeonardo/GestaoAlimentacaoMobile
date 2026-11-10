@@ -4,6 +4,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.SoupKitchen
+import androidx.compose.material.icons.filled.MonitorWeight
+import androidx.compose.material.icons.filled.WaterDrop
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -21,6 +23,8 @@ data class MenuItem(val route: Any, val title: String, val icon: ImageVector)
 val menuItems = listOf(
     MenuItem(Inicio, "Início", Icons.Default.Home),
     MenuItem(Receitas, "Receitas", Icons.Default.SoupKitchen),
+    MenuItem(Agua, "Água", Icons.Default.WaterDrop),
+    MenuItem(Peso, "Peso", Icons.Default.MonitorWeight),
     MenuItem(Perfil, "Perfil", Icons.Default.Person)
 )
 

@@ -81,7 +81,49 @@ fun AppNavigation(
             RecipeScreen(
                 recipeViewModel = viewModel(),
                 onAddRecipeClick = { navController.navigate(AddEditRecipe()) },
-                onEditRecipeClick = { id -> navController.navigate(AddEditRecipe(id)) }
+                onEditRecipeClick = { id -> navController.navigate(AddEditRecipe(id)) },
+                onSugestoesClick = { navController.navigate(Sugestoes) }
+            )
+        }
+
+                composable<Agua> {
+            WaterScreen(
+                waterViewModel = viewModel(),
+                onAddClick = { navController.navigate(AddEditWater()) },
+                onEditClick = { id -> navController.navigate(AddEditWater(id)) }
+            )
+        }
+
+        composable<AddEditWater> { back ->
+            val rota = back.toRoute<AddEditWater>()
+            AddEditWaterScreen(
+                waterViewModel = viewModel(),
+                waterId = rota.waterId,
+                voltar = { navController.popBackStack() }
+            )
+        }
+        
+        composable<Peso> {
+            WeightScreen(
+                weightViewModel = viewModel(),
+                onAddClick = { navController.navigate(AddEditWeight()) },
+                onEditClick = { id -> navController.navigate(AddEditWeight(id)) }
+            )
+        }
+
+        composable<AddEditWeight> { back ->
+            val rota = back.toRoute<AddEditWeight>()
+            AddEditWeightScreen(
+                weightViewModel = viewModel(),
+                weightId = rota.weightId,
+                voltar = { navController.popBackStack() }
+            )
+        }
+
+        composable<Sugestoes> {
+            SuggestionsScreen(
+                suggestionsViewModel = viewModel(),
+                voltar = { navController.popBackStack() }
             )
         }
 

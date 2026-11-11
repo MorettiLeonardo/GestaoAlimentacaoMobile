@@ -2,7 +2,6 @@ package com.example.gestaoalimentacao.ui.theme
 
 import android.app.Activity
 import android.os.Build
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.dynamicDarkColorScheme
@@ -26,8 +25,10 @@ private val LightColorScheme = lightColorScheme(
 
 @Composable
 fun GestaoAlimentacaoTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
-    dynamicColor: Boolean = true,
+    // As telas usam cores claras fixas (fundos brancos); o tema escuro/dinâmico deixava
+    // texto claro sobre fundo branco. Mantemos o tema claro até as telas usarem o colorScheme.
+    darkTheme: Boolean = false,
+    dynamicColor: Boolean = false,
     content: @Composable () -> Unit
 ) {
     val colorScheme = when {

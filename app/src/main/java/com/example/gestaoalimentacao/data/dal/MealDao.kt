@@ -52,7 +52,8 @@ internal class MealDao(context: Context) {
             arrayOf(usuarioId.toString()),
             null, null, null
         ).use { cursor ->
-            if (cursor.moveToFirst()) cursor.getInt(0) else 0
+            // SUM do SQLite é 64 bits; limitamos ao Int para não "dar a volta" e ficar negativo.
+            if (cursor.moveToFirst()) cursor.getLong(0).coerceIn(0L, Int.MAX_VALUE.toLong()).toInt() else 0
         }
     }
 
@@ -93,7 +94,8 @@ internal class MealDao(context: Context) {
         id = cursor.getString(0),
         title = cursor.getString(1),
         description = cursor.getString(2),
-        category = cursor.getString(3),
+        // Registros antigos foram gravados com o nome digitado errado.
+        category = cursor.getString(3).let { if (it == "Carboidrate") "Carboidrato" else it },
         portionValue = cursor.getDouble(4),
         portionUnit = cursor.getString(5),
         calories = cursor.getInt(6),

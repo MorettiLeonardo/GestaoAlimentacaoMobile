@@ -79,6 +79,21 @@ internal class AppDatabase(context: Context) : SQLiteOpenHelper(
     }
 
     override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
+        // Versões anteriores à 6 não têm migração: o esquema é recriado.
+        if (oldVersion < 6) {
+            recriar(db)
+            return
+        }
+        // Próximas versões: adicione migrações incrementais aqui para NÃO apagar os dados, ex.:
+        // if (oldVersion < 7) db.execSQL("ALTER TABLE refeicoes ADD COLUMN ...")
+    }
+
+    // Sem isto, instalar uma versão com banco mais antigo por cima faz toda operação falhar.
+    override fun onDowngrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
+        recriar(db)
+    }
+
+    private fun recriar(db: SQLiteDatabase) {
         db.execSQL("DROP TABLE IF EXISTS agua")
         db.execSQL("DROP TABLE IF EXISTS peso")
         db.execSQL("DROP TABLE IF EXISTS refeicoes")

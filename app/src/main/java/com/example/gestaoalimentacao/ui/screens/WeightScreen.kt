@@ -14,6 +14,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
@@ -21,16 +22,41 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.gestaoalimentacao.data.model.WeightEntry
 import com.example.gestaoalimentacao.ui.viewmodel.WeightViewModel
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.util.Locale
 
 fun formatarKg(valor: Double): String = String.format(Locale("pt", "BR"), "%.1f kg", valor)
 
+/** Lê a foto reduzida para ~[ladoMaximo] px, sem carregar a imagem inteira na memória. */
+private fun decodificarFoto(caminho: String, ladoMaximo: Int): ImageBitmap? {
+    val limites = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+    BitmapFactory.decodeFile(caminho, limites)
+    if (limites.outWidth <= 0 || limites.outHeight <= 0) return null
+
+    var amostra = 1
+    while (limites.outWidth / (amostra * 2) >= ladoMaximo && limites.outHeight / (amostra * 2) >= ladoMaximo) {
+        amostra *= 2
+    }
+    val opcoes = BitmapFactory.Options().apply { inSampleSize = amostra }
+    return BitmapFactory.decodeFile(caminho, opcoes)?.asImageBitmap()
+}
+
 @Composable
 fun FotoLocal(caminho: String, modifier: Modifier = Modifier) {
-    val imagem = remember(caminho) {
-        val opcoes = BitmapFactory.Options().apply { inSampleSize = 4 }
-        BitmapFactory.decodeFile(caminho, opcoes)?.asImageBitmap()
+    // Decodificar na composição trava a rolagem da lista; fazemos em segundo plano.
+    val carregada by produceState<ImageBitmap?>(initialValue = null, caminho) {
+        value = withContext(Dispatchers.IO) {
+            try {
+                decodificarFoto(caminho, ladoMaximo = 512)
+            } catch (e: Exception) {
+                null
+            } catch (e: OutOfMemoryError) {
+                null
+            }
+        }
     }
+    val imagem = carregada
     if (imagem != null) {
         Image(
             bitmap = imagem,

@@ -7,6 +7,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.gestaoalimentacao.data.remote.MealDto
 import com.example.gestaoalimentacao.data.remote.RetrofitClient
+import com.example.gestaoalimentacao.data.remote.converterRefeicao
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 
@@ -36,7 +37,7 @@ class SuggestionsViewModel : ViewModel() {
         viewModelScope.launch {
             try {
                 val resposta = RetrofitClient.api.buscar(termo)
-                resultados = resposta.meals ?: emptyList()
+                resultados = resposta.meals.orEmpty().map { converterRefeicao(it) }
                 if (resultados.isEmpty()) mensagem = "Nenhuma sugestão encontrada."
             } catch (e: CancellationException) {
                 throw e

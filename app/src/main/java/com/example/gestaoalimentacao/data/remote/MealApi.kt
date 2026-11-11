@@ -4,16 +4,32 @@ import com.google.gson.annotations.SerializedName
 import retrofit2.http.GET
 import retrofit2.http.Query
 
+// A API manda os ingredientes em 20 campos separados (strIngredient1..20 e strMeasure1..20),
+// por isso cada receita é lida como mapa e depois convertida em MealDto.
 data class MealSearchResponse(
-    @SerializedName("meals") val meals: List<MealDto>?
+    @SerializedName("meals") val meals: List<Map<String, String?>>?
 )
 
 data class MealDto(
-    @SerializedName("idMeal") val id: String,
-    @SerializedName("strMeal") val name: String,
-    @SerializedName("strCategory") val category: String?,
-    @SerializedName("strArea") val area: String?,
-    @SerializedName("strInstructions") val instructions: String?
+    val id: String,
+    val name: String,
+    val category: String?,
+    val area: String?,
+    val instructions: String?,
+    val ingredients: List<String>
+)
+
+fun converterRefeicao(dados: Map<String, String?>) = MealDto(
+    id = dados["idMeal"].orEmpty(),
+    name = dados["strMeal"].orEmpty(),
+    category = dados["strCategory"],
+    area = dados["strArea"],
+    instructions = dados["strInstructions"],
+    ingredients = (1..20).mapNotNull { i ->
+        val ingrediente = dados["strIngredient$i"]?.trim()
+        if (ingrediente.isNullOrEmpty()) null
+        else "${dados["strMeasure$i"].orEmpty().trim()} $ingrediente".trim()
+    }
 )
 
 interface MealApi {

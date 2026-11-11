@@ -1,7 +1,9 @@
 package com.example.gestaoalimentacao
 
+import android.graphics.Color
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.padding
@@ -19,7 +21,11 @@ import com.example.gestaoalimentacao.ui.theme.GestaoAlimentacaoTheme
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
+        // App sempre claro: ícones escuros nas barras do sistema mesmo com o celular no modo escuro.
+        enableEdgeToEdge(
+            statusBarStyle = SystemBarStyle.light(Color.TRANSPARENT, Color.TRANSPARENT),
+            navigationBarStyle = SystemBarStyle.light(Color.TRANSPARENT, Color.TRANSPARENT)
+        )
         setContent {
             GestaoAlimentacaoTheme {
                 val navController = rememberNavController()

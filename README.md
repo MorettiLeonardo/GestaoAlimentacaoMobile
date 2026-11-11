@@ -8,7 +8,7 @@ Um aplicativo nativo Android moderno desenvolvido em **Kotlin** e **Jetpack Comp
 
 - 🔐 **Autenticação Local (Login & Cadastro)**:
   - Cadastro de novos usuários e login com validação de credenciais e gerenciamento de sessão local.
-  - Credencial mock para testes rápidos: `usuario@email.com` / `123456`.
+  - Não há usuário pré-cadastrado: crie uma conta na tela de cadastro para entrar.
 
 - 📊 **Diário de Hoje (Home)**:
   - Barra de progresso reativa de consumo de calorias diárias (ex: `1450/2000 kcal`).
@@ -49,8 +49,10 @@ O projeto utiliza a arquitetura **MVVM (Model-View-ViewModel)** com fluxo de dad
 ```
 com.example.gestaoalimentacao/
 ├── data/
-│   ├── model/       # Data classes (User, Meal, Recipe)
-│   └── repository/  # Repositórios locais (AuthRepository, MealRepository, RecipeRepository)
+│   ├── dal/         # Acesso ao SQLite (UserDao, MealDao, RecipeDao, WaterDao, WeightDao)
+│   ├── local/       # AppDatabase (SQLiteOpenHelper)
+│   ├── model/       # Data classes (User, Meal, Recipe, WaterIntake, WeightEntry)
+│   └── remote/      # Retrofit (TheMealDB) para sugestões de receitas
 ├── ui/
 │   ├── navigation/  # NavHost, rotas e barra de navegação inferior
 │   ├── screens/     # Componentes de UI Jetpack Compose (Login, Register, DailyLog, AddEditMeal, etc.)
@@ -66,9 +68,9 @@ com.example.gestaoalimentacao/
 Para compilar e executar este projeto em sua máquina local, você precisará de:
 
 * **Android Studio** (Ladybug, Jellyfish ou versão mais recente)
-* **JDK 11** ou superior
+* **JDK 17** ou superior (exigido pelo Android Gradle Plugin 9)
 * **Android SDK**:
-  * `compileSdk`: 37 / 35
+  * `compileSdk`: 37
   * `minSdk`: 24 (Android 7.0 Nougat ou superior)
 * Um emulador Android (AVD) ou dispositivo físico conectado via USB com **Depuração USB** ativada.
 
@@ -106,6 +108,17 @@ Você também pode compilar ou instalar o APK via terminal:
   ./gradlew assembleDebug
   ./gradlew installDebug
   ```
+
+### 5. Rodar os testes
+```powershell
+.\gradlew.bat testDebugUnitTest
+```
+
+> **Windows: caminhos com espaço.** Mantenha o projeto numa pasta sem espaços (ex.: `C:\kotlin\...`) — o Robolectric falha nos testes de banco se o caminho do projeto tiver espaços.
+> Se o Gradle falhar com `Unable to establish loopback connection` (pasta do usuário com espaço, ex.: `C:\Users\Nome Sobrenome`), rode antes no PowerShell:
+> ```powershell
+> $env:JAVA_TOOL_OPTIONS="-Djdk.net.unixdomain.tmpdir=C:\Users\Public"
+> ```
 
 ---
 

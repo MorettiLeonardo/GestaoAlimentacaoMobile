@@ -31,6 +31,15 @@ android {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
+    testOptions {
+        unitTests {
+            isIncludeAndroidResources = true
+            // O Robolectric falha ao ler seus artefatos quando o caminho do ~/.m2 tem espaços
+            // (ex.: "C:\Users\Nome Sobrenome"). Usamos uma pasta sem espaços dentro do projeto.
+            val robolectricRepo = rootProject.file(".gradle/robolectric-repo").absolutePath
+            all { it.systemProperty("maven.repo.local", robolectricRepo) }
+        }
+    }
     buildFeatures {
         compose = true
     }
@@ -51,6 +60,8 @@ dependencies {
     implementation("com.squareup.retrofit2:retrofit:2.11.0")
     implementation("com.squareup.retrofit2:converter-gson:2.11.0")
     testImplementation(libs.junit)
+    testImplementation(libs.robolectric)
+    testImplementation(libs.androidx.test.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     androidTestImplementation(libs.androidx.espresso.core)

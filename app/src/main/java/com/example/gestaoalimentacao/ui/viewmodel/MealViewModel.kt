@@ -55,7 +55,12 @@ class MealViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     private suspend fun carregarLista(usuarioId: Long) {
-        refeicoes = withContext(Dispatchers.IO) { dao.listar(usuarioId, busca) }
+        // Se o usuário digitou enquanto a consulta rodava, consulta de novo com o termo atual.
+        var termo: String
+        do {
+            termo = busca
+            refeicoes = withContext(Dispatchers.IO) { dao.listar(usuarioId, termo) }
+        } while (termo != busca)
         caloriasConsumidas = withContext(Dispatchers.IO) { dao.somarCaloriasConsumidas(usuarioId) }
         metaCalorica = withContext(Dispatchers.IO) { usuarioDao.buscarPorId(usuarioId)?.calorieGoal ?: 0 }
     }
@@ -89,8 +94,13 @@ class MealViewModel(application: Application) : AndroidViewModel(application) {
         require(titulo.trim().length in 2..100) { "Informe um nome entre 2 e 100 caracteres." }
         require(categoria.isNotBlank()) { "Selecione uma categoria." }
         require(unidade.isNotBlank()) { "Selecione a unidade da porção." }
-        val porcao = requireNotNull(porcaoTexto.toDoubleOrNull()) { "Informe uma porção válida." }
-        val calorias = requireNotNull(caloriasTexto.toIntOrNull()) { "Informe as calorias." }
+        val porcao = requireNotNull(lerDecimal(porcaoTexto)) { "Informe uma porção válida." }
+        require(porcao > 0.0 && porcao <= MAX_PORCAO) { "A porção deve ficar entre 0 e ${MAX_PORCAO.toInt()}." }
+        val calorias = requireNotNull(caloriasTexto.trim().toIntOrNull()) { "Informe as calorias." }
+        require(calorias in 0..MAX_CALORIAS) { "As calorias devem ficar entre 0 e $MAX_CALORIAS." }
+        val carboidratos = lerMacro(carboidratosTexto, "carboidratos")
+        val proteinas = lerMacro(proteinasTexto, "proteínas")
+        val gorduras = lerMacro(gordurasTexto, "gorduras")
 
         val dados = (refeicao ?: Meal(title = titulo.trim())).copy(
             title = titulo.trim(),
@@ -98,9 +108,9 @@ class MealViewModel(application: Application) : AndroidViewModel(application) {
             portionValue = porcao,
             portionUnit = unidade,
             calories = calorias,
-            carbs = carboidratosTexto.toDoubleOrNull() ?: 0.0,
-            protein = proteinasTexto.toDoubleOrNull() ?: 0.0,
-            fat = gordurasTexto.toDoubleOrNull() ?: 0.0,
+            carbs = carboidratos,
+            protein = proteinas,
+            fat = gorduras,
             notes = observacoes.trim(),
             reminderEnabled = lembrete
         )
@@ -126,5 +136,23 @@ class MealViewModel(application: Application) : AndroidViewModel(application) {
 
     fun consumirSalvo() {
         salvo = false
+    }
+
+    companion object {
+        const val MAX_CALORIAS = 10_000
+        const val MAX_PORCAO = 10_000.0
+        private const val MAX_MACRO = 1_000.0
+
+        /** Aceita vírgula ou ponto como separador decimal; rejeita NaN/Infinity. */
+        internal fun lerDecimal(texto: String): Double? =
+            texto.trim().replace(',', '.').toDoubleOrNull()?.takeIf { it.isFinite() }
+
+        /** Campo de macro vazio vale 0; texto inválido ou fora da faixa gera erro em vez de virar 0. */
+        private fun lerMacro(texto: String, nome: String): Double {
+            if (texto.isBlank()) return 0.0
+            val valor = requireNotNull(lerDecimal(texto)) { "Informe um valor válido para $nome." }
+            require(valor in 0.0..MAX_MACRO) { "O valor de $nome deve ficar entre 0 e ${MAX_MACRO.toInt()} g." }
+            return valor
+        }
     }
 }

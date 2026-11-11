@@ -21,6 +21,9 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.gestaoalimentacao.ui.viewmodel.WeightViewModel
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -69,15 +72,22 @@ fun AddEditWeightScreen(
     }
     var foto by remember(existente) { mutableStateOf(existente?.photoPath ?: "") }
     var erroFoto by remember { mutableStateOf(false) }
+    var copiandoFoto by remember { mutableStateOf(false) }
+    val escopo = rememberCoroutineScope()
 
     val galeria = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
         if (uri != null) {
-            val caminho = copiarImagem(context, uri)
-            if (caminho != null) {
-                foto = caminho
-                erroFoto = false
-            } else {
-                erroFoto = true
+            copiandoFoto = true
+            // Copiar uma foto grande na thread principal trava a tela; fazemos em segundo plano.
+            escopo.launch {
+                val caminho = withContext(Dispatchers.IO) { copiarImagem(context, uri) }
+                if (caminho != null) {
+                    foto = caminho
+                    erroFoto = false
+                } else {
+                    erroFoto = true
+                }
+                copiandoFoto = false
             }
         }
     }
@@ -127,6 +137,7 @@ fun AddEditWeightScreen(
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             OutlinedButton(
                 onClick = { galeria.launch("image/*") },
+                enabled = !copiandoFoto,
                 shape = RoundedCornerShape(12.dp)
             ) {
                 Text(if (foto.isBlank()) "Escolher foto da galeria" else "Trocar foto")
@@ -135,6 +146,7 @@ fun AddEditWeightScreen(
                 TextButton(onClick = { foto = "" }) { Text("Remover foto") }
             }
         }
+        if (copiandoFoto) Text("Carregando foto...", fontSize = 13.sp)
         if (erroFoto) {
             Text("Não foi possível carregar a foto.", color = MaterialTheme.colorScheme.error, fontSize = 13.sp)
         }
@@ -155,7 +167,7 @@ fun AddEditWeightScreen(
             }
             Button(
                 onClick = { weightViewModel.salvar(peso, data, foto) },
-                enabled = !weightViewModel.carregando && !weightViewModel.salvo,
+                enabled = !weightViewModel.carregando && !weightViewModel.salvo && !copiandoFoto,
                 shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0D52CE)),
                 modifier = Modifier

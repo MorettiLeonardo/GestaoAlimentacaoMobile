@@ -43,18 +43,18 @@ fun AddEditMealScreen(
     // Os campos são preenchidos de novo quando a refeição chega do banco.
     var title by remember(existingMeal) { mutableStateOf(existingMeal?.title ?: "") }
     var selectedCategory by remember(existingMeal) { mutableStateOf(existingMeal?.category ?: "") }
-    var portionValueText by remember(existingMeal) { mutableStateOf(existingMeal?.portionValue?.toInt()?.toString() ?: "") }
+    var portionValueText by remember(existingMeal) { mutableStateOf(existingMeal?.portionValue?.let(::formatarNumero) ?: "") }
     var portionUnit by remember(existingMeal) { mutableStateOf(existingMeal?.portionUnit ?: "") }
     var caloriesText by remember(existingMeal) { mutableStateOf(existingMeal?.calories?.toString() ?: "") }
-    var carbsText by remember(existingMeal) { mutableStateOf(existingMeal?.carbs?.toString() ?: "") }
-    var proteinText by remember(existingMeal) { mutableStateOf(existingMeal?.protein?.toString() ?: "") }
-    var fatText by remember(existingMeal) { mutableStateOf(existingMeal?.fat?.toString() ?: "") }
+    var carbsText by remember(existingMeal) { mutableStateOf(existingMeal?.carbs?.let(::formatarNumero) ?: "") }
+    var proteinText by remember(existingMeal) { mutableStateOf(existingMeal?.protein?.let(::formatarNumero) ?: "") }
+    var fatText by remember(existingMeal) { mutableStateOf(existingMeal?.fat?.let(::formatarNumero) ?: "") }
     var notes by remember(existingMeal) { mutableStateOf(existingMeal?.notes ?: "") }
     var reminderEnabled by remember(existingMeal) { mutableStateOf(existingMeal?.reminderEnabled ?: false) }
 
 
     var unitDropdownExpanded by remember { mutableStateOf(false) }
-    val categories = listOf("Proteina", "Carboidrate", "Vegetal")
+    val categories = listOf("Proteina", "Carboidrato", "Vegetal")
 
     val scrollState = rememberScrollState()
 
@@ -156,7 +156,7 @@ fun AddEditMealScreen(
                 OutlinedTextField(
                     value = portionValueText,
                     onValueChange = { portionValueText = it },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     shape = RoundedCornerShape(12.dp),
                     trailingIcon = {
                         Icon(
@@ -371,3 +371,7 @@ fun AddEditMealScreen(
         }
     }
 }
+
+/** Mostra 150.0 como "150" e 150.5 como "150.5", sem perder casas decimais ao editar. */
+internal fun formatarNumero(valor: Double): String =
+    if (valor % 1.0 == 0.0) valor.toLong().toString() else valor.toString()

@@ -50,8 +50,15 @@ class RecipeViewModel(application: Application) : AndroidViewModel(application) 
         }
     }
 
-    fun listar() = executar {
-        receitas = withContext(Dispatchers.IO) { dao.listar(busca) }
+    fun listar() = executar { carregarLista() }
+
+    private suspend fun carregarLista() {
+        // Se o usuário digitou enquanto a consulta rodava, consulta de novo com o termo atual.
+        var termo: String
+        do {
+            termo = busca
+            receitas = withContext(Dispatchers.IO) { dao.listar(termo) }
+        } while (termo != busca)
     }
 
     fun mudarBusca(valor: String) {
@@ -104,10 +111,8 @@ class RecipeViewModel(application: Application) : AndroidViewModel(application) 
     }
 
     fun excluir(id: String) = executar {
-        receitas = withContext(Dispatchers.IO) {
-            dao.excluir(id)
-            dao.listar(busca)
-        }
+        withContext(Dispatchers.IO) { dao.excluir(id) }
+        carregarLista()
         mensagem = "Receita excluída."
     }
 
